@@ -43,27 +43,43 @@ using namespace custom;
 //////////////////////////////////////////////////
 GstCameraSystem::GstCameraSystem()
 {
-	// Default UDP host
-	const char *host_ip = std::getenv("PX4_VIDEO_HOST_IP");
+    // --- Read environment variables for UDP host and port ---
+    const char *env_host = std::getenv("PX4_VIDEO_HOST_IP");
+    const char *env_port = std::getenv("PX4_VIDEO_PORT");
 
-	if (host_ip) {
-		_udpHost = std::string(host_ip);
+    if (env_host && std::strlen(env_host) > 0) {
+        _udpHost = std::string(env_host);
+    } else {
+        _udpHost = "127.0.0.1";
+    }
 
-	} else {
-		_udpHost = "127.0.0.1";
-	}
+    if (env_port && std::strlen(env_port) > 0) {
+        try {
+            _udpPort = std::stoi(env_port);
+        } catch (...) {
+            gzdbg << "Invalid PX4_VIDEO_PORT value, using default 5600" << std::endl;
+            _udpPort = 5600;
+        }
+    } else {
+        _udpPort = 5600; // default fallback
+    }
 
-	// Initialize gstreamer
-	static bool gstInitialized = false;
+    gzdbg << "GstCameraSystem environment config:"
+          << " host=" << _udpHost
+          << " port=" << _udpPort
+          << std::endl;
 
-	if (!gstInitialized) {
-		gst_init(nullptr, nullptr);
-		gstInitialized = true;
-	}
+    // Initialize GStreamer
+    static bool gstInitialized = false;
+    if (!gstInitialized) {
+        gst_init(nullptr, nullptr);
+        gstInitialized = true;
+    }
 
-	// Setup camera topic regex pattern
-	_cameraTopicPattern = std::regex("/world/([^/]+)/model/([^/]+)/link/([^/]+)/sensor/([^/]+)/image");
+    // Setup camera topic regex pattern
+    _cameraTopicPattern = std::regex("/world/([^/]+)/model/([^/]+)/link/([^/]+)/sensor/([^/]+)/image");
 }
+
 
 //////////////////////////////////////////////////
 GstCameraSystem::~GstCameraSystem()
