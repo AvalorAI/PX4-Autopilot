@@ -46,6 +46,7 @@ GstCameraSystem::GstCameraSystem()
     // --- Read environment variables for UDP host and port ---
     const char *env_host = std::getenv("PX4_VIDEO_HOST_IP");
     const char *env_port = std::getenv("PX4_VIDEO_PORT");
+    const char *env_rtmp = std::getenv("PX4_VIDEO_RTMP_URL");
 
     if (env_host && std::strlen(env_host) > 0) {
         _udpHost = std::string(env_host);
@@ -62,6 +63,12 @@ GstCameraSystem::GstCameraSystem()
         }
     } else {
         _udpPort = 5600; // default fallback
+    }
+
+    if(env_rtmp && std::strlen(env_rtmp)> 0 )
+    {
+	_rtmpLocation = std::string(env_rtmp);
+	_useRtmp = true;
     }
 
     gzdbg << "GstCameraSystem environment config:"
