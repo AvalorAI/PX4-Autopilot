@@ -80,6 +80,7 @@ if validate:
 forced = os.environ.get("PX4_FORCE_COMMIT")
 if forced:
     git_version = forced
+    print("Sasha123")
 else:
     git_version = subprocess.check_output('git rev-parse --verify HEAD'.split(),
                                           stderr=subprocess.STDOUT).decode('utf-8').strip()
