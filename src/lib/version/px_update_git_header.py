@@ -77,8 +77,13 @@ if validate:
         print("")
         sys.exit(1)
 
-git_version = subprocess.check_output('git rev-parse --verify HEAD'.split(),
-                                      stderr=subprocess.STDOUT).decode('utf-8').strip()
+forced = os.environ.get("PX4_FORCE_COMMIT")
+if forced:
+    git_version = forced
+else:
+    git_version = subprocess.check_output('git rev-parse --verify HEAD'.split(),
+                                          stderr=subprocess.STDOUT).decode('utf-8').strip()
+
 try:
     git_branch_name = subprocess.check_output('git symbolic-ref -q --short HEAD'.split(),
                                           stderr=subprocess.STDOUT).decode('utf-8').strip()
