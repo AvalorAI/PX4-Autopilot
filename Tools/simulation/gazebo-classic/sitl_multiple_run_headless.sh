@@ -108,6 +108,8 @@ fi
 
 echo "Starting gazebo"
 gzserver ${src_path}/Tools/simulation/gazebo-classic/sitl_gazebo-classic/worlds/${world}.world --verbose $ros_args &
+GZSERVER_PID=$!
+
 sleep 5
 
 n=0
@@ -149,4 +151,9 @@ else
 fi
 trap "cleanup" SIGINT SIGTERM EXIT
 
-echo "Starting gazebo client"
+echo "Gazebo server running (PID=$GZSERVER_PID)"
+echo "Press Ctrl+C to stop"
+
+wait $GZSERVER_PID
+echo "Gazebo running"
+tail -f /dev/null
