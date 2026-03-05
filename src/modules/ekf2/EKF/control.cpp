@@ -58,6 +58,7 @@ void Ekf::controlFusionModes(const imuSample &imu_delayed)
 			set_in_air_status(system_flags_delayed.in_air);
 
 			set_is_fixed_wing(system_flags_delayed.is_fixed_wing);
+			set_in_transition_to_fw(system_flags_delayed.in_transition_to_fw);
 
 			if (system_flags_delayed.gnd_effect) {
 				set_gnd_effect();
@@ -117,6 +118,7 @@ void Ekf::controlFusionModes(const imuSample &imu_delayed)
 
 #if defined(CONFIG_EKF2_AUX_GLOBAL_POSITION) && defined(MODULE_NAME)
 	_aux_global_position.update(*this, imu_delayed);
+	_control_status.flags.aux_gpos = _aux_global_position.anySourceFusing();
 #endif // CONFIG_EKF2_AUX_GLOBAL_POSITION
 
 #if defined(CONFIG_EKF2_AIRSPEED)

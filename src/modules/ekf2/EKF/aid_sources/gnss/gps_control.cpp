@@ -104,12 +104,17 @@ void Ekf::controlGpsFusion(const imuSample &imu_delayed)
 
 		bool do_vel_pos_reset = false;
 
-		if (!_control_status.flags.gnss_fault && (_control_status.flags.gnss_vel || _control_status.flags.gnss_pos)) {
+		if (!_control_status.flags.gnss_fault && _control_status.flags.in_air && isYawFailure()) {
+			const bool velocity_fusion_failure =  _aid_src_gnss_vel.innovation_rejected
+							      && isTimedOut(_time_last_hor_vel_fuse, _params.EKFGSF_reset_delay)
+							      && (_time_last_hor_vel_fuse > _time_last_on_ground_us);
 
-			if (_control_status.flags.in_air
-			    && isYawFailure()
-			    && isTimedOut(_time_last_hor_vel_fuse, _params.EKFGSF_reset_delay)
-			    && (_time_last_hor_vel_fuse > _time_last_on_ground_us)) {
+			const bool position_fusion_failure =  _aid_src_gnss_pos.innovation_rejected
+							      && isTimedOut(_time_last_hor_pos_fuse, _params.EKFGSF_reset_delay)
+							      && (_time_last_hor_pos_fuse > _time_last_on_ground_us);
+
+			if ((_control_status.flags.gnss_vel && velocity_fusion_failure)
+			    || (_control_status.flags.gnss_pos && position_fusion_failure)) {
 				do_vel_pos_reset = tryYawEmergencyReset();
 			}
 		}
@@ -155,7 +160,7 @@ void Ekf::controlGnssVelFusion(estimator_aid_source3d_s &aid_src, const bool for
 			const bool do_reset = force_reset || !_control_status_prev.flags.yaw_align;
 
 			// Start fusing the data without reset if possible to avoid disturbing the filter
-			if (!do_reset && ((aid_src.test_ratio[0] + aid_src.test_ratio[1]) < sq(0.5f))) {
+			if (!do_reset && aid_src.test_ratio[0] < 1.f && aid_src.test_ratio[1] < 1.f) {
 				fused = fuseVelocity(aid_src);
 			}
 
@@ -216,7 +221,7 @@ void Ekf::controlGnssPosFusion(estimator_aid_source2d_s &aid_src, const bool for
 			// Start fusing the data without reset if possible to avoid disturbing the filter
 			if (_local_origin_lat_lon.isInitialized()
 			    && !do_reset
-			    && ((aid_src.test_ratio[0] + aid_src.test_ratio[1]) < sq(0.5f))) {
+			    && aid_src.test_ratio[0] < 1.f && aid_src.test_ratio[1] < 1.f) {
 				fused = fuseHorizontalPosition(aid_src);
 			}
 
